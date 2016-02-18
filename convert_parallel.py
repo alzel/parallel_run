@@ -16,23 +16,27 @@ parser = argparse.ArgumentParser(description='Runs msconvert in parallel on Wind
 parser.add_argument('-i', '--input_dir', required=True, type=str, help='Input directory')
 parser.add_argument('-o', '--output_suffix', default='_converted', type=str,
                     help='Ending added to input_dir for output')
+parser.add_argument('-r', '--regex', default="*.wiff", type=str, help="Input regex")
+
 parser.add_argument('-n', '--number_threads', default=4, type=int, help='Number of threads to use at a time')
+#parser.add_argument('-t', '--t', default=1, type=int, help='1 - msconvert; 2 - qtofpeakpicker, valid only for wiff')
 parser.add_argument('-f', '--format', default="mzML", type=str, help='Format to convert to')
 args = parser.parse_args()  # create an object having name and age as attributes)
 
 data_dir = args.input_dir
 output_suffix = args.output_suffix
+pattern = args.regex
 new_format = args.format
 threads = args.number_threads
 
 output_dir = data_dir + output_suffix
+
 
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
 bin = "msconvert.exe"
 program = 'C:\\"Program Files"\ProteoWizard\\"ProteoWizard 3.0.9172"' + "\\" + bin
-
 
 def split_seq(iterable, size):
     it = iter(iterable)
@@ -41,10 +45,10 @@ def split_seq(iterable, size):
         yield item
         item = list(itertools.islice(it, size))
 
-
 # filtering input files
-myfiles = glob.glob(data_dir + '\*.wiff')
+myfiles = glob.glob(data_dir + pattern)
 
+print myfiles
 # splitting input into chunks of threads size
 chunks = split_seq(myfiles, threads)
 
@@ -52,6 +56,7 @@ for chunk in list(chunks):
 
     for input_file in chunk:
         filename, file_extension = os.path.splitext(input_file)
+
         command = " ".join(['start', program, "--" + new_format, '--32 --zlib --filter "peakPicking true 1-" -o',
                             output_dir, input_file, "--outfile", filename + "." + new_format])
         print command
